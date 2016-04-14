@@ -2,15 +2,11 @@
 package com.tagish.auth;
 
 import java.util.Map;
-import java.io.*;
 import java.util.*;
-import java.security.Principal;
 import java.sql.*;
-import java.math.*;
 import javax.security.auth.*;
 import javax.security.auth.callback.*;
 import javax.security.auth.login.*;
-import javax.security.auth.spi.*;
 
 /**
  * Simple database based authentication module.
@@ -25,49 +21,41 @@ public class DBLogin extends SimpleLogin
 	protected String                dbUser;
 	protected String                dbPassword;
 	protected String                userTable;
-	protected String                roleMapTable;
-	protected String                roleTable;
-	protected String                where;
+        protected String                userColumn;
+        protected String                passwordColumn;
 
 	protected synchronized Vector validateUser(String username, char password[]) throws LoginException
 	{
-		ResultSet rsu = null, rsr = null;
+		ResultSet rsu = null;
 		Connection con = null;
-		PreparedStatement psu = null, psr = null;
+		PreparedStatement psu = null;
 
 		try
 		{
+                    if(username == null || username.isEmpty()){
+                        throw new FailedLoginException("User cannot be empty!");
+                    }
 			Class.forName(dbDriver);
 			if (dbUser != null)
 			   con = DriverManager.getConnection(dbURL, dbUser, dbPassword);
 			else
 			   con = DriverManager.getConnection(dbURL);
 
-			psu = con.prepareStatement("SELECT UserID,Password FROM " + userTable +
-									   " WHERE UserName=?" + where);
-			psr = con.prepareStatement("SELECT " + roleTable + ".RoleName FROM " +
-									   roleMapTable + "," + roleTable +
-									   " WHERE " + roleMapTable + ".UserID=? AND " +
-									   roleMapTable + ".RoleID=" + roleTable + ".RoleID");
-
+			psu = con.prepareStatement("SELECT " + userColumn +"," + passwordColumn + " FROM " + userTable +
+									   " WHERE UserName=?");
 			psu.setString(1, username);
-			rsu = psu.executeQuery();
+			rsu = psu.executeQuery();                        
 			if (!rsu.next()) throw new FailedLoginException("Unknown user");
-			int uid = rsu.getInt(1);
-			String upwd = rsu.getString(2);
-			String tpwd = null;
-			try {
-				tpwd = new String(Utils.cryptPassword(password));
-			} catch (Exception e) {
-				throw new LoginException("Error encoding password (" + e.getMessage() + ")");
-			}
-			if (!upwd.equals(tpwd)) throw new FailedLoginException("Bad password");
+                        rsu.close();
+                        psu.close();
+			psu = con.prepareStatement("SELECT " + userColumn +"," + passwordColumn + " FROM " + userTable +
+									   " WHERE UserName=? AND Password=PASSWORD(?)");
+			psu.setString(1, username);
+                        psu.setString(2, new String(password));
+			rsu = psu.executeQuery();
+			if (!rsu.next()) throw new FailedLoginException("Wrong Password");
 			Vector p = new Vector();
 			p.add(new TypedPrincipal(username, TypedPrincipal.USER));
-			psr.setInt(1, uid);
-			rsr = psr.executeQuery();
-			while (rsr.next())
-				p.add(new TypedPrincipal(rsr.getString(1), TypedPrincipal.GROUP));
 			return p;
 		}
 		catch (ClassNotFoundException e)
@@ -82,9 +70,7 @@ public class DBLogin extends SimpleLogin
 		{
 			try {
 				if (rsu != null) rsu.close();
-				if (rsr != null) rsr.close();
 				if (psu != null) psu.close();
-				if (psr != null) psr.close();
 				if (con != null) con.close();
 			} catch (Exception e) { }
 		}
@@ -103,13 +89,8 @@ public class DBLogin extends SimpleLogin
 		if ((dbUser == null && dbPassword != null) || (dbUser != null && dbPassword == null))
 		   throw new Error("Either provide dbUser and dbPassword or encode both in dbURL");
 
-		userTable    = getOption("userTable",    "User");
-		roleMapTable = getOption("roleMapTable", "RoleMap");
-		roleTable    = getOption("roleTable",    "Role");
-		where        = getOption("where",        "");
-		if (null != where && where.length() > 0)
-			where = " AND " + where;
-		else
-			where = "";
+		userTable    = getOption("userTable",    "user");
+		userColumn    = getOption("userColumn",    "UserName");
+		passwordColumn    = getOption("passwordColumn",    "Password");
 	}
 }

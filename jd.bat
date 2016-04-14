@@ -1,1 +1,0 @@
-javadoc -link http://java.sun.com/products/jdk/1.2/docs/api/ -d doc\api -sourcepath src -classpath C:\javalib\Jaas1.0\lib\jaas.jar;classes -use -version -author com.tagish.auth com.tagish.auth.win32 com.tagish.auth.win32.typed com.tagish.auth.tools

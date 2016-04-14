@@ -1,14 +1,10 @@
 // $Id: SimpleLogin.java 2 2008-09-03 19:06:36Z celdredge $
 package com.tagish.auth;
 
-import java.util.Map;
-import java.io.*;
 import java.util.*;
 import java.security.Principal;
-import javax.security.auth.*;
 import javax.security.auth.callback.*;
 import javax.security.auth.login.*;
-import javax.security.auth.spi.*;
 
 /**
  * Base class for a variety of simple login modules that simply authenticate
