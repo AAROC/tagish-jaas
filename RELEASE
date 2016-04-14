@@ -1,6 +1,0 @@
-$Id: RELEASE,v 1.1 2003/02/17 20:14:44 andy Exp $
-
-1.0.3 2003/02/17 andy@tagish.com
-
-This release adds a better implementation of typed Principals (thanks to Jerry Smith <JSmith@sedonaesolutions.com>) and fixes some pretty hideous problems (a memory leak and a logic flaw which broke authentication in a lot of cases).
-
